@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ProductAPI.ApplicationCore.Contracts.Services;
 using ProductAPI.ApplicationCore.Entities;
 using ProductAPI.Infrastructure.Services;
 
@@ -9,17 +10,32 @@ namespace ProductAPI.Controllers;
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly ICacheService   _cacheService;
+        private const string AllProductsCacheKey = "cache:allProducts";
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
         
-        public ProductController(IProductService productService)
+        public ProductController(IProductService productService, ICacheService   cacheService)
         {
             _productService = productService;
+            _cacheService = cacheService;
         }
         
         // GET: api/Product/GetAllProducts
         [HttpGet("GetAllProducts")]
         public async Task<IActionResult> GetAllProducts()
         {
-            var products = await _productService.GetAllAsync();
+            // 1) Try retrieving from Redis
+            var cached = await _cacheService.GetAsync<List<Product>>(AllProductsCacheKey);
+            if (cached != null && cached.Count > 0)
+                return Ok(cached);
+
+            // 2) Fallback to DB via service
+            var productsEnumerable = await _productService.GetAllAsync();
+            var products = productsEnumerable.ToList();
+
+            // 3) Cache for next time
+            await _cacheService.SetAsync(AllProductsCacheKey, products, CacheDuration);
+
             return Ok(products);
         }
         
@@ -55,9 +71,22 @@ namespace ProductAPI.Controllers;
         {
             if (product == null)
                 return BadRequest("Product is null.");
-            
-            var result = await _productService.InsertAsync(product);
-            return Ok(new { Message = "Product created", RowsAffected = result, product.Id });
+
+            var rowsAffected = await _productService.InsertAsync(product);
+
+            if (rowsAffected > 0)
+            {
+                // Invalidate cache
+                await _cacheService.RemoveAsync(AllProductsCacheKey);
+                return Ok(new
+                {
+                    Message       = "Product created",
+                    RowsAffected  = rowsAffected,
+                    ProductId     = product.Id
+                });
+            }
+
+            return BadRequest("Could not create the product.");
         }
         
         // PUT: api/Product/Update/{id}
@@ -66,32 +95,62 @@ namespace ProductAPI.Controllers;
         {
             if (product == null)
                 return BadRequest("Product is null.");
-            
+
             if (id != product.Id)
                 return BadRequest("Product ID mismatch.");
-            
-            var result = await _productService.UpdateAsync(product);
-            return Ok(new { Message = "Product updated", RowsAffected = result });
+
+            var rowsAffected = await _productService.UpdateAsync(product);
+            if (rowsAffected > 0)
+            {
+                // Invalidate cache
+                await _cacheService.RemoveAsync(AllProductsCacheKey);
+                return Ok(new
+                {
+                    Message      = "Product updated",
+                    RowsAffected = rowsAffected
+                });
+            }
+
+            return BadRequest("Could not update the product.");
         }
         
         
+        // PUT: api/Product/Inactive/{id}
         [HttpPut("Inactive/{id}")]
         public async Task<IActionResult> Inactive(int id)
         {
             var rowsAffected = await _productService.MarkInactiveAsync(id);
-            if (rowsAffected == 0)
-                return NotFound($"No product found with ID {id} to mark inactive.");
-            
-            return Ok(new { Message = "Product marked inactive", RowsAffected = rowsAffected });
+            if (rowsAffected > 0)
+            {
+                // Invalidate cache
+                await _cacheService.RemoveAsync(AllProductsCacheKey);
+                return Ok(new
+                {
+                    Message      = "Product marked inactive",
+                    RowsAffected = rowsAffected
+                });
+            }
+
+            return NotFound($"No product found with ID {id} to mark inactive.");
         }
+
         
         // DELETE: api/Product/DeleteProduct/{id}
         [HttpDelete("DeleteProduct/{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var result = await _productService.DeleteAsync(id);
-            if (result == 0)
-                return NotFound($"No product found with ID {id} to delete.");
-            return Ok(new { Message = "Product deleted", RowsAffected = result });
+            var rowsAffected = await _productService.DeleteAsync(id);
+            if (rowsAffected > 0)
+            {
+                // Invalidate cache
+                await _cacheService.RemoveAsync(AllProductsCacheKey);
+                return Ok(new
+                {
+                    Message      = "Product deleted",
+                    RowsAffected = rowsAffected
+                });
+            }
+
+            return NotFound($"No product found with ID {id} to delete.");
         }
     }
