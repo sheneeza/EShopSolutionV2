@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProductAPI.ApplicationCore.Contracts.Services;
 using ProductAPI.ApplicationCore.Entities;
@@ -64,7 +65,7 @@ namespace ProductAPI.Controllers;
             var products = await _productService.GetProductsByNameAsync(name);
             return Ok(products);
         }
-        
+        [Authorize(Roles = "Admin")]
         // POST: api/Product/Save
         [HttpPost("Save")]
         public async Task<IActionResult> Save([FromBody] Product product)

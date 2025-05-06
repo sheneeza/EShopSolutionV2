@@ -22,4 +22,5 @@ RUN dotnet publish "ProductAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+ENV angularURL='http://localhost:4200'
 ENTRYPOINT ["dotnet", "ProductAPI.dll"]
