@@ -1,0 +1,44 @@
+name: Trigger auto deployment for productcontainerapp
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - '**'
+    - '.github/workflows/productcontainerapp-AutoDeployTrigger-24d135a2-6d74-4b60-8d90-911e44bb10a5.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:
+      
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.PRODUCTCONTAINERAPP_AZURE_CREDENTIALS }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}/ProductAPI
+          _dockerfilePathKey_: _dockerfilePath_
+          registryUrl: productcontainerregistry25.azurecr.io
+          registryUsername: ${{ secrets.PRODUCTCONTAINERAPP_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.PRODUCTCONTAINERAPP_REGISTRY_PASSWORD }}
+          containerAppName: productcontainerapp
+          resourceGroup: ProductMicroservice
+          imageToBuild: productcontainerregistry25.azurecr.io/productapi:${{ github.sha }}
+          
+            
+
+     
+
