@@ -1,0 +1,40 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  orderapi:
+    build:
+      context: "/Users/patriciasheneezasison/RiderProjects/EShopSolutionV2"
+      dockerfile: "OrderAPI/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net9.0/OrderAPI.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "orderapi:dev"
+    ports: []
+    volumes:
+    - "/Users/patriciasheneezasison/RiderProjects/EShopSolutionV2/OrderAPI:/app:rw"
+    - "/Users/patriciasheneezasison/RiderProjects/EShopSolutionV2:/src:rw"
+    - "/Users/patriciasheneezasison/.nuget/packages:/home/app/.nuget/packages"
+    working_dir: "/app"
+  productapi:
+    build:
+      context: "/Users/patriciasheneezasison/RiderProjects/EShopSolutionV2"
+      dockerfile: "ProductAPI/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net9.0/ProductAPI.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "productapi:dev"
+    ports: []
+    volumes:
+    - "/Users/patriciasheneezasison/RiderProjects/EShopSolutionV2/ProductAPI:/app:rw"
+    - "/Users/patriciasheneezasison/RiderProjects/EShopSolutionV2:/src:rw"
+    - "/Users/patriciasheneezasison/.nuget/packages:/home/app/.nuget/packages"
+    working_dir: "/app"

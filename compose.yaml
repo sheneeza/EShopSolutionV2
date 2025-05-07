@@ -1,0 +1,13 @@
+﻿services:
+  orderapi:
+    image: orderapi
+    build:
+      context: .
+      dockerfile: OrderAPI/Dockerfile
+
+
+  productapi:
+    image: productapi
+    build:
+      context: .
+      dockerfile: ProductAPI/Dockerfile
