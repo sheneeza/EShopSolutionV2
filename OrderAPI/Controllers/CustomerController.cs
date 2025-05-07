@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderAPI.ApplicationCore.Contracts.Services;
 using OrderAPI.ApplicationCore.Entities;
@@ -8,6 +9,7 @@ namespace OrderAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Customer")]
 public class CustomerController : ControllerBase
 {
     private readonly ICustomerService _customerService;

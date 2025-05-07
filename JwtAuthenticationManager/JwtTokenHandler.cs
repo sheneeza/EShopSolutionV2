@@ -29,8 +29,14 @@ public class JwtTokenHandler
         var claimsIdentity = new ClaimsIdentity(new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.NameId, request.Username),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             //add claim for role new Claim(ClaimTypes.Role, request.)
         });
+        
+        claimsIdentity.AddClaims(
+            request.Roles.Select(r => new Claim(ClaimTypes.Role, r))
+        );
+
 
         var signingCredential = new SigningCredentials(new SymmetricSecurityKey(tokenKey), 
             SecurityAlgorithms.HmacSha256Signature);

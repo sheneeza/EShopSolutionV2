@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ReviewsAPI.ApplicationCore.Contracts.Services;
 using ReviewsAPI.ApplicationCore.Entities;
@@ -7,6 +8,7 @@ namespace ReviewsAPI.Controllers;
 
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class CustomerReviewController : ControllerBase
     {
         private readonly ICustomerReviewService _service;
@@ -18,6 +20,7 @@ namespace ReviewsAPI.Controllers;
 
         // GET /api/CustomerReview
         [HttpGet]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<IEnumerable<Review>>> GetAllReviews()
         {
             var reviews = await _service.GetAllAsync();
@@ -26,6 +29,7 @@ namespace ReviewsAPI.Controllers;
 
         // POST /api/CustomerReview
         [HttpPost]
+        [Authorize(Roles = "Customer")]
         public async Task<ActionResult> CreateReview([FromBody] CustomerReviewRequestModel model)
         {
             var newReview = new Review
@@ -51,6 +55,7 @@ namespace ReviewsAPI.Controllers;
 
         // PUT /api/CustomerReview
         [HttpPut]
+        [Authorize(Roles = "Customer")]
         public async Task<ActionResult> UpdateReview([FromBody] CustomerReviewRequestModel model)
         {
             var existing = await _service.GetByIdAsync(model.Id);
@@ -78,6 +83,7 @@ namespace ReviewsAPI.Controllers;
 
         // DELETE /api/CustomerReview/delete/{id}
         [HttpDelete("delete/{id}")]
+        [Authorize(Roles = "Customer")]
         public async Task<ActionResult> DeleteReview(int id)
         {
             var result = await _service.DeleteAsync(id);
@@ -89,6 +95,7 @@ namespace ReviewsAPI.Controllers;
 
         // GET /api/CustomerReview/user/{userId}
         [HttpGet("user/{userId}")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<IEnumerable<Review>>> GetReviewsByUser(int userId)
         {
             var reviews = await _service.GetReviewsByUserAsync(userId);
@@ -97,6 +104,7 @@ namespace ReviewsAPI.Controllers;
 
         // GET /api/CustomerReview/product/{productId}
         [HttpGet("product/{productId}")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<IEnumerable<Review>>> GetReviewsByProduct(int productId)
         {
             var reviews = await _service.GetReviewsByProductAsync(productId);
@@ -105,6 +113,7 @@ namespace ReviewsAPI.Controllers;
 
         // PUT /api/CustomerReview/approve/{id}
         [HttpPut("approve/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> ApproveReview(int id)
         {
             var success = await _service.ApproveReviewAsync(id);
@@ -116,6 +125,7 @@ namespace ReviewsAPI.Controllers;
 
         // PUT /api/CustomerReview/reject/{id}
         [HttpPut("reject/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> RejectReview(int id)
         {
             var success = await _service.RejectReviewAsync(id);

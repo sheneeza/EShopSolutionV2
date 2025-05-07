@@ -1,3 +1,4 @@
+using JwtAuthenticationManager;
 using Microsoft.EntityFrameworkCore;
 using OrderAPI.ApplicationCore.Contracts.Services;
 using OrderAPI.ApplicationCore.Entities;
@@ -32,6 +33,8 @@ builder.Services.AddScoped<IRepository<PaymentMethod>, BaseRepository<PaymentMet
 builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
 builder.Services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
 builder.Services.AddScoped<IShoppingCartItemService, ShoppingCartItemService>();
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization(); 
 
 builder.Services.AddSwaggerGen();
 builder.Services.AddEndpointsApiExplorer();
@@ -41,14 +44,14 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
-    app.MapOpenApi();
-    app.MapControllers();
-    app.UseRouting();
-    app.UseSwagger();
-    app.UseSwaggerUI();
-
+app.MapOpenApi();
+app.UseRouting();
+app.UseSwagger();
+app.UseSwaggerUI();
 //}
-
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 app.UseHttpsRedirection();
 app.UseCors(policy =>
 {

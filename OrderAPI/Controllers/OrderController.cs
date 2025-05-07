@@ -20,7 +20,7 @@ public class OrderController : ControllerBase
     }
         
     [HttpGet("GetAllOrders")]
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllOrders(int page = 1, int size = 10)
     {
         var orders = await _orderService.GetAllOrdersAsync(page, size);
@@ -28,7 +28,7 @@ public class OrderController : ControllerBase
     }
     
     [HttpPost("SaveOrder")]
-    //[Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> SaveOrder([FromBody] OrderModel orderDto)
     {
         var order = _mapper.Map<Order>(orderDto);
@@ -38,7 +38,7 @@ public class OrderController : ControllerBase
 
 
     [HttpGet("CheckOrderHistory")]
-    //[Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> CheckOrderHistory(int customerId)
     {
         var history = await _orderService.GetOrderByIdAsync(customerId);
@@ -46,7 +46,7 @@ public class OrderController : ControllerBase
     }
     
     [HttpGet("CheckOrderStatus")]
-    //[Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> CheckOrderStatus(int orderId)
     {
         var status = await _orderService.GetOrderStatusAsync(orderId);
@@ -54,7 +54,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpPut("CancelOrder")]
-    //[Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> CancelOrder(int orderId)
     {
         var result = await _orderService.CancelOrderAsync(orderId);
@@ -62,7 +62,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpPost("OrderCompleted")]
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CompleteOrder(int orderId)
     {
         var result = await _orderService.MarkOrderCompletedAsync(orderId);

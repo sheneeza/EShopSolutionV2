@@ -23,6 +23,7 @@ namespace ProductAPI.Controllers;
         
         // GET: api/Product/GetAllProducts
         [HttpGet("GetAllProducts")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> GetAllProducts()
         {
             // 1) Try retrieving from Redis
@@ -42,6 +43,7 @@ namespace ProductAPI.Controllers;
         
         // GET: api/Product/GetProductById/{id}
         [HttpGet("GetProductById/{id}")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> GetProductById(int id)
         {
             var product = await _productService.GetByIdAsync(id);
@@ -52,6 +54,7 @@ namespace ProductAPI.Controllers;
         
         // GET: api/Product/GetProductByCategoryId/{categoryId}
         [HttpGet("GetProductByCategoryId/{categoryId}")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> GetProductByCategoryId(int categoryId)
         {
             var products = await _productService.GetProductsByCategoryIdAsync(categoryId);
@@ -60,6 +63,7 @@ namespace ProductAPI.Controllers;
         
         // GET: api/Product/GetProductByName/{name}
         [HttpGet("GetProductByName/{name}")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> GetProductByName(string name)
         {
             var products = await _productService.GetProductsByNameAsync(name);
@@ -92,6 +96,7 @@ namespace ProductAPI.Controllers;
         
         // PUT: api/Product/Update/{id}
         [HttpPut("Update/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] Product product)
         {
             if (product == null)
@@ -118,6 +123,7 @@ namespace ProductAPI.Controllers;
         
         // PUT: api/Product/Inactive/{id}
         [HttpPut("Inactive/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Inactive(int id)
         {
             var rowsAffected = await _productService.MarkInactiveAsync(id);
@@ -138,6 +144,7 @@ namespace ProductAPI.Controllers;
         
         // DELETE: api/Product/DeleteProduct/{id}
         [HttpDelete("DeleteProduct/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             var rowsAffected = await _productService.DeleteAsync(id);

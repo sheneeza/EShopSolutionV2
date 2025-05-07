@@ -1,3 +1,4 @@
+using JwtAuthenticationManager;
 using Microsoft.EntityFrameworkCore;
 using ReviewsAPI.ApplicationCore.Contracts.Repositories;
 using ReviewsAPI.ApplicationCore.Contracts.Services;
@@ -22,19 +23,22 @@ builder.Services.AddDbContext<ReviewsDbContext>(options =>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<ICustomerReviewRepository, CustomerReviewRepository>();
 builder.Services.AddScoped<ICustomerReviewService, CustomerReviewService>();
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization(); 
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
-    app.MapOpenApi();
-    app.MapControllers();
-    app.UseRouting();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.MapOpenApi();
+app.UseRouting();
+app.UseSwagger();
+app.UseSwaggerUI();
 //}
-
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 app.UseHttpsRedirection();
 app.UseCors(policy =>
 {

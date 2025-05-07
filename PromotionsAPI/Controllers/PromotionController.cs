@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PromotionsAPI.ApplicationCore.Contracts.Services;
 using PromotionsAPI.ApplicationCore.Entities;
@@ -18,6 +19,7 @@ namespace PromotionsAPI.Controllers;
 
         // GET: api/Promotion
         [HttpGet]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<IEnumerable<Promotion>>> GetAllPromotions()
         {
             var promotions = await _promotionService.GetAllPromotionsAsync();
@@ -26,6 +28,7 @@ namespace PromotionsAPI.Controllers;
 
         // GET: api/Promotion/{id}
         [HttpGet("{id}")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<Promotion>> GetPromotionById(int id)
         {
             var promotion = await _promotionService.GetPromotionWithDetailsByIdAsync(id);
@@ -36,6 +39,7 @@ namespace PromotionsAPI.Controllers;
 
         // GET: api/Promotion/active
         [HttpGet("activePromotions")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<IEnumerable<Promotion>>> GetActivePromotions()
         {
             var promotions = await _promotionService.GetActivePromotionsAsync();
@@ -43,6 +47,7 @@ namespace PromotionsAPI.Controllers;
         }
         
         [HttpGet("promotionByProductName")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<IEnumerable<Promotion>>> GetPromotionsByProductName([FromQuery] string productName)
         {
             var promotions = await _promotionService.GetPromotionsByProductNameAsync(productName);
@@ -52,6 +57,7 @@ namespace PromotionsAPI.Controllers;
 
         // POST: api/Promotion
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreatePromotion([FromBody] PromotionRequestModel model)
         {
             // Map the request model to the Promotion entity
@@ -77,6 +83,7 @@ namespace PromotionsAPI.Controllers;
 
         // PUT: api/Promotion
         [HttpPut]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdatePromotion([FromBody] PromotionRequestModel model)
         {
             var existing = await _promotionService.GetPromotionByIdAsync(model.Id);
@@ -106,6 +113,7 @@ namespace PromotionsAPI.Controllers;
 
         // DELETE: api/Promotion/{id}
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeletePromotion(int id)
         {
             var result = await _promotionService.DeletePromotionAsync(id);

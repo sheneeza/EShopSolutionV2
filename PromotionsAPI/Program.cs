@@ -1,3 +1,4 @@
+using JwtAuthenticationManager;
 using Microsoft.EntityFrameworkCore;
 using PromotionsAPI.ApplicationCore.Contracts.Repositories;
 using PromotionsAPI.ApplicationCore.Contracts.Services;
@@ -23,19 +24,22 @@ builder.Services.AddDbContext<PromotionsDbContext>(options =>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization(); 
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
-    app.MapOpenApi();
-    app.MapControllers();
-    app.UseRouting();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.MapOpenApi();
+app.UseRouting();
+app.UseSwagger();
+app.UseSwaggerUI();
 //}
-
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 app.UseHttpsRedirection();
 app.UseCors(policy =>
 {

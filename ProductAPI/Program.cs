@@ -49,19 +49,21 @@ builder.Services.AddScoped<IProductVariationRepository, ProductVariationReposito
 builder.Services.AddScoped<IVariationValueService, VariationValueService>();
 builder.Services.AddScoped<IVariationValueRepository, VariationValueRepository>();
 builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization();  
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
-    app.MapOpenApi();
-    app.MapControllers();
-    app.UseRouting();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.MapOpenApi();
+app.UseRouting();
+app.UseSwagger();
+app.UseSwaggerUI();
 //}
-
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 app.UseHttpsRedirection();
 
 var angularURL = Environment.GetEnvironmentVariable("angularURL");
@@ -70,8 +72,6 @@ app.UseCors(policy =>
     policy.WithOrigins(angularURL).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
 });
 
-app.UseAuthorization();
-app.UseAuthentication();
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"

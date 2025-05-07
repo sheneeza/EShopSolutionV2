@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShippingAPI.ApplicationCore.Contracts.Services;
 using ShippingAPI.ApplicationCore.Entities;
@@ -26,6 +27,7 @@ namespace ShippingAPI.Controllers;
         
         // GET /api/Shipper
         [HttpGet]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<IEnumerable<Shipper>>> GetAllShippers()
         {
             // try cache first
@@ -44,6 +46,7 @@ namespace ShippingAPI.Controllers;
         
         // GET /api/Shipper/{id}
         [HttpGet("{id}")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<Shipper>> GetShipperById(int id)
         {
             var shipper = await _shipperService.GetShipperByIdAsync(id);
@@ -58,6 +61,7 @@ namespace ShippingAPI.Controllers;
         // Gets shippers for a particular region.
         // GET /api/Shipper/region/{regionId}
         [HttpGet("region/{region}")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<IEnumerable<Shipper>>> GetShippersByRegion(int regionId)
         {
             var shippers = await _shipperService.GetShippersByRegionAsync(regionId);
@@ -67,6 +71,7 @@ namespace ShippingAPI.Controllers;
         
         // POST /api/Shipper
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateShipper([FromBody] ShipperRequestModel model)
         {
             var newShipper = new Shipper {
@@ -91,6 +96,7 @@ namespace ShippingAPI.Controllers;
         
         // PUT /api/Shipper
         [HttpPut]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateShipper([FromBody] ShipperRequestModel model)
         {
             var existing = await _shipperService.GetShipperByIdAsync(model.Id);
@@ -115,6 +121,7 @@ namespace ShippingAPI.Controllers;
         
         // DELETE /api/Shipper/delete/{id}
         [HttpDelete("delete/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteShipper(int id)
         {
             var result = await _shipperService.DeleteShipperAsync(id);

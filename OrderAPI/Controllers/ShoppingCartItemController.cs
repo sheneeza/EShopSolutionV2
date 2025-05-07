@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderAPI.ApplicationCore.Contracts.Services;
 
@@ -5,6 +6,7 @@ namespace OrderAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Customer")]
 public class ShoppingCartItemController : ControllerBase
 {
     private readonly IShoppingCartItemService _itemService;
