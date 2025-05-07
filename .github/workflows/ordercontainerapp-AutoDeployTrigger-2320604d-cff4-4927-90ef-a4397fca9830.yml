@@ -1,0 +1,44 @@
+name: Trigger auto deployment for ordercontainerapp
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - '**'
+    - '.github/workflows/ordercontainerapp-AutoDeployTrigger-2320604d-cff4-4927-90ef-a4397fca9830.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:
+      
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.ORDERCONTAINERAPP_AZURE_CREDENTIALS }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}/OrderAPI
+          _dockerfilePathKey_: _dockerfilePath_
+          registryUrl: ordercontainerregistry123.azurecr.io
+          registryUsername: ${{ secrets.ORDERCONTAINERAPP_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.ORDERCONTAINERAPP_REGISTRY_PASSWORD }}
+          containerAppName: ordercontainerapp
+          resourceGroup: OrderMicroservice
+          imageToBuild: ordercontainerregistry123.azurecr.io/orderapi:${{ github.sha }}
+          
+            
+
+     
+
