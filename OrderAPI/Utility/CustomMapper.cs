@@ -14,5 +14,9 @@ public class CustomMapper: Profile
         CreateMap<PaymentMethodModel, PaymentMethod>().ReverseMap();
         CreateMap<ShoppingCartItemModel, ShoppingCartItem>().ReverseMap();
         CreateMap<ShoppingCartModel, ShoppingCart>().ReverseMap();
+        // Only map the shipping‐related fields
+        CreateMap<OrderShippingUpdateModel, Order>()
+            .ForMember(dest => dest.Order_Status, opt => opt.MapFrom(src => src.ShippingStatus))
+            .ForAllMembers(opt => opt.Ignore());
     }
 }

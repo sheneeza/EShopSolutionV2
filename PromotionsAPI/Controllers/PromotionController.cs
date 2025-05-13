@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PromotionsAPI.ApplicationCore.Contracts.Services;
 using PromotionsAPI.ApplicationCore.Entities;
 using PromotionsAPI.ApplicationCore.Models;
+using PromotionsAPI.Utility;
 
 namespace PromotionsAPI.Controllers;
 
@@ -11,10 +12,12 @@ namespace PromotionsAPI.Controllers;
     public class PromotionController : ControllerBase
     {
         private readonly IPromotionService _promotionService;
+        private readonly PromotionEventPublisher  _publisher;
 
-        public PromotionController(IPromotionService promotionService)
+        public PromotionController(IPromotionService promotionService, PromotionEventPublisher publisher)
         {
             _promotionService = promotionService;
+            _publisher = publisher;
         }
 
         // GET: api/Promotion
@@ -60,25 +63,38 @@ namespace PromotionsAPI.Controllers;
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreatePromotion([FromBody] PromotionRequestModel model)
         {
-            // Map the request model to the Promotion entity
+            // 1) Map & save
             var promotion = new Promotion
             {
-                Name = model.Name,
-                Description = model.Description,
-                Discount = model.Discount,
-                StartDate = model.StartDate,
-                EndDate = model.EndDate,
-                PromotionDetails = model.PromotionDetails?.Select(pd => new PromotionDetail
-                {
-                    ProductCategoryId = pd.ProductCategoryId,
-                    ProductCategoryName = pd.ProductCategoryName
-                }).ToList() ?? new List<PromotionDetail>()
+                Name             = model.Name,
+                Description      = model.Description,
+                Discount         = model.Discount,
+                StartDate        = model.StartDate,
+                EndDate          = model.EndDate,
+                PromotionDetails = model.PromotionDetails?
+                                       .Select(pd => new PromotionDetail {
+                                           ProductCategoryId   = pd.ProductCategoryId,
+                                           ProductCategoryName = pd.ProductCategoryName
+                                       }).ToList()
+                                   ?? new List<PromotionDetail>()
             };
 
-            var result = await _promotionService.CreatePromotionAsync(promotion);
-            if (result > 0)
-                return Ok("Promotion created successfully.");
-            return BadRequest("Failed to create the promotion.");
+            var newId = await _promotionService.CreatePromotionAsync(promotion);
+            if (newId <= 0)
+                return BadRequest("Failed to create the promotion.");
+
+            // 2) Publish started event
+            var startedEvt = new PromotionStartedEvent(
+                promotion.Id,
+                promotion.Name,
+                promotion.Description,
+                promotion.Discount,
+                promotion.StartDate,
+                promotion.EndDate
+            );
+            await _publisher.PublishPromotionStartedAsync(startedEvt);
+
+            return Ok("Promotion created and PromotionStarted event published.");
         }
 
         // PUT: api/Promotion
@@ -90,7 +106,10 @@ namespace PromotionsAPI.Controllers;
             if (existing == null)
                 return NotFound($"Promotion with ID {model.Id} not found.");
 
-            // Update the properties
+            // remember old end date
+            var oldEnd = existing.EndDate;
+
+            // update properties
             existing.Name = model.Name;
             existing.Description = model.Description;
             existing.Discount = model.Discount;
@@ -98,18 +117,33 @@ namespace PromotionsAPI.Controllers;
             existing.EndDate = model.EndDate;
             if (model.PromotionDetails != null)
             {
-                existing.PromotionDetails = model.PromotionDetails.Select(pd => new PromotionDetail
-                {
-                    ProductCategoryId = pd.ProductCategoryId,
-                    ProductCategoryName = pd.ProductCategoryName
-                }).ToList();
+                existing.PromotionDetails = model.PromotionDetails
+                    .Select(pd => new PromotionDetail
+                    {
+                        ProductCategoryId = pd.ProductCategoryId,
+                        ProductCategoryName = pd.ProductCategoryName
+                    })
+                    .ToList();
             }
 
-            var result = await _promotionService.UpdatePromotionAsync(existing);
-            if (result > 0)
-                return Ok("Promotion updated successfully.");
-            return BadRequest("Failed to update the promotion.");
-        }
+            var updated = await _promotionService.UpdatePromotionAsync(existing);
+            if (updated <= 0)
+                return BadRequest("Failed to update the promotion.");
+
+            // If EndDate is now in the past, publish ended event
+            if (oldEnd < existing.EndDate && existing.EndDate <= DateTime.UtcNow)
+            {
+                var endedEvt = new PromotionEndedEvent(
+                    existing.Id,
+                    existing.Name,
+                    existing.EndDate
+                );
+                await _publisher.PublishPromotionEndedAsync(endedEvt);
+            }
+
+            return Ok("Promotion updated and any PromotionEnded event published.");
+        
+    }
 
         // DELETE: api/Promotion/{id}
         [HttpDelete("{id}")]

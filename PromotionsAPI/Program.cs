@@ -5,6 +5,7 @@ using PromotionsAPI.ApplicationCore.Contracts.Services;
 using PromotionsAPI.Infrastructure.Data;
 using PromotionsAPI.Infrastructure.Repositories;
 using PromotionsAPI.Infrastructure.Services;
+using PromotionsAPI.Utility;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,12 @@ builder.Services.AddDbContext<PromotionsDbContext>(options =>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
+builder.Services.AddSingleton(sp =>
+{
+    // reads from appsettings.json "ConnectionStrings:ServiceBus"
+    var connStr = builder.Configuration.GetConnectionString("ServiceBus");
+    return new PromotionEventPublisher(connStr);
+});
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization(); 
 

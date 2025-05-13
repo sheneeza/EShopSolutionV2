@@ -33,6 +33,12 @@ builder.Services.AddDbContext<ShippingDbContext>(options =>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<IShipperRepository, ShipperRepository>();
 builder.Services.AddScoped<IShipperService, ShipperService>();
+builder.Services.AddHttpClient("OrderService", c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["OrderService:BaseUrl"]);
+    c.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization(); 
 

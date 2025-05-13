@@ -15,13 +15,16 @@ namespace ShippingAPI.Controllers;
 
         private readonly IShipperService _shipperService;
         private readonly ICacheService   _cacheService;
+        private readonly IHttpClientFactory   _httpClientFactory;
 
         public ShipperController(
             IShipperService shipperService,
-            ICacheService   cacheService)
+            ICacheService   cacheService,
+            IHttpClientFactory httpClientFactory)
         {
             _shipperService = shipperService;
             _cacheService   = cacheService;
+            _httpClientFactory = httpClientFactory;
         }
 
         
@@ -132,5 +135,16 @@ namespace ShippingAPI.Controllers;
             }
 
             return NotFound($"No shipper found with ID {id}");
+        }
+        
+        [HttpPut("{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> UpdateStatus(int id, [FromBody] ShippingStatusRequestModel model)
+        {
+            var ok = await _shipperService.UpdateShipmentStatusAsync(model.OrderId, model.Status);
+            if (!ok)
+                return StatusCode(500, "Failed to notify Order service.");
+
+            return Ok("Shipping status updated.");
         }
     }

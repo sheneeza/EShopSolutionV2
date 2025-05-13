@@ -10,4 +10,5 @@ public interface IShipperService
     Task<int> UpdateShipperAsync(Shipper shipper);
     Task<int> DeleteShipperAsync(int id);
     Task<IEnumerable<Shipper>> GetShippersByRegionAsync(int regionId);
+    Task<bool> UpdateShipmentStatusAsync(int orderId, string status);
 }

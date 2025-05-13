@@ -1,9 +1,11 @@
+using System.Text.Json;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderAPI.ApplicationCore.Contracts.Services;
 using OrderAPI.ApplicationCore.Entities;
 using OrderAPI.ApplicationCore.Models;
+using OrderAPI.Utility;
 
 namespace OrderAPI.Controllers;
 [ApiController]
@@ -12,11 +14,13 @@ public class OrderController : ControllerBase
 {
     private readonly IOrderService _orderService;
     private readonly IMapper _mapper;
+    private readonly OrderCompleted _orderCompleted;
 
     public OrderController(IOrderService orderService, IMapper mapper)
     {
         _orderService = orderService;
         _mapper = mapper;
+        _orderCompleted = new OrderCompleted();
     }
         
     [HttpGet("GetAllOrders")]
@@ -65,8 +69,51 @@ public class OrderController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CompleteOrder(int orderId)
     {
-        var result = await _orderService.MarkOrderCompletedAsync(orderId);
-        return result ? Ok("Order marked as completed.") : BadRequest("Update failed.");
+        // 1) Mark as completed
+        var success = await _orderService.MarkOrderCompletedAsync(orderId);
+        if (!success)
+            return BadRequest("Update failed.");
+
+        // 2) Reload full order (with details)
+        var order = await _orderService.GetOrderByIdAsync(orderId);
+        if (order == null)
+            return NotFound($"Order {orderId} not found after completion.");
+
+        // 3) Event payload
+        var evt = new
+        {
+            order.Id,
+            OrderDate        = order.Order_Date,
+            order.CustomerId,
+            order.CustomerName,
+            Payment = new
+            {
+                order.PaymentMethodId,
+                order.PaymentName
+            },
+            Shipping = new
+            {
+                order.ShippingAddress,
+                order.ShippingMethod
+            },
+            order.BillingAmount,
+            OrderStatus   = order.Order_Status,
+            Items = order.Order_Details.Select(d => new
+            {
+                d.Id,
+                d.Product_Id,
+                d.Product_name,
+                d.Qty,
+                d.Price,
+                d.Discount
+            })
+        };
+
+        // 4) Serialize & publish
+        var message = JsonSerializer.Serialize(evt);
+        await _orderCompleted.AddMessageToQueueAsync(message);
+
+        return Ok("Order marked as completed and event published.");
     }
 
     
@@ -84,6 +131,27 @@ public class OrderController : ControllerBase
 
         var result = await _orderService.UpdateAsync(existingOrder);
         return result > 0 ? Ok("Order updated.") : StatusCode(500, "Failed to update order.");
+    }
+    
+    [HttpPut("{orderId}/shipping-status")]
+    public async Task<IActionResult> UpdateShippingStatus(
+        int orderId,
+        [FromBody] OrderShippingUpdateModel dto)
+    {
+        if (dto == null || dto.OrderId != orderId)
+            return BadRequest("Order ID mismatch.");
+        
+        var existingOrder = await _orderService.GetOrderByIdAsync(orderId);
+        if (existingOrder == null)
+            return NotFound($"Order {orderId} not found.");
+        
+        _mapper.Map(dto, existingOrder);
+        
+        var updated = await _orderService.UpdateAsync(existingOrder);
+        if (updated > 0)
+            return Ok("Shipping status updated.");
+            
+        return StatusCode(500, "Failed to update shipping status.");
     }
 
 }

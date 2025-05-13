@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using ShippingAPI.ApplicationCore.Contracts.Repositories;
 using ShippingAPI.ApplicationCore.Contracts.Services;
 using ShippingAPI.ApplicationCore.Entities;
@@ -7,10 +8,12 @@ namespace ShippingAPI.Infrastructure.Services;
 public class ShipperService : IShipperService
 {
     private readonly IShipperRepository _shipperRepository;
+    private readonly IHttpClientFactory  _httpClientFactory;
 
-    public ShipperService(IShipperRepository shipperRepository)
+    public ShipperService(IShipperRepository shipperRepository, IHttpClientFactory httpClientFactory)
     {
         _shipperRepository = shipperRepository;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<IEnumerable<Shipper>> GetAllShippersAsync()
@@ -43,5 +46,22 @@ public class ShipperService : IShipperService
     public async Task<IEnumerable<Shipper>> GetShippersByRegionAsync(int regionId)
     {
         return await _shipperRepository.GetShippersByRegionAsync(regionId);
+    }
+    
+    public async Task<bool> UpdateShipmentStatusAsync(int orderId, string status)
+    {
+
+        //Call the Order Microservice
+        var client = _httpClientFactory.CreateClient("OrderService");
+        var payload = new 
+        {
+            OrderId        = orderId,
+            ShippingStatus = status,
+        };
+
+        var response = await client
+            .PutAsJsonAsync($"api/Order/{orderId}/shipping-status", payload);
+
+        return response.IsSuccessStatusCode;
     }
 }
