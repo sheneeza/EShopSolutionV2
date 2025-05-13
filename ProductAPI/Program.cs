@@ -8,6 +8,21 @@ using ProductAPI.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var angularUrl = builder.Configuration.GetValue<string>("angularURL");
+if (string.IsNullOrWhiteSpace(angularUrl))
+    throw new InvalidOperationException("Missing configuration for 'angularURL'");
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("LocalDev", policy =>
+    {
+        policy
+            .WithOrigins(angularUrl) 
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -57,20 +72,16 @@ var app = builder.Build();
 //if (app.Environment.IsDevelopment())
 //{
 app.MapOpenApi();
+app.UseHttpsRedirection();
 app.UseRouting();
 app.UseSwagger();
 app.UseSwaggerUI();
 //}
+app.UseCors("LocalDev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.UseHttpsRedirection();
 
-var angularURL = Environment.GetEnvironmentVariable("angularURL");
-app.UseCors(policy =>
-{
-    policy.WithOrigins(angularURL).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
-});
 
 var summaries = new[]
 {
